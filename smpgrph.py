@@ -1,12 +1,20 @@
 #!/usr/bin/env python
 
-"""Simple graph library with class definitions of Graph, Node and
-Edge objects to be used in graph algorithmes.
+"""Simple graph library with class definitions of Graph and Node objects to be
+used in graph algorithmes. Edges are determined in a Graph object by setting
+two Node objects of the Graph's nodes dictionary in relation to each other.
+This is done by specifying the "weight" and optionaly the direction between
+the two nodes in the neighbours dictionary of each Node object. The neighbouring
+Node's identifier is the key while the "weight" is the value. When edges have no
+direction the same "weight" is used for both Nodes.
 """
 
 #import essential modules, libraries and methods/functions
 from __future__ import (absolute_import, division, print_function, unicode_literals)
 from builtins import *
+""" To install builtins simply navigate to the package future and type "setup.py install"
+into the command line.
+"""
 from priodict import priorityDictionary
 
 """Define classes of this library
@@ -25,14 +33,24 @@ class Node(object):
 
     def __str__(self):
         return "Node \"%s\" with neighbours: %s" % (self.identifier, self.neighbours)
+    
+class Edge(object):
+    """ Edge object initialized with an identifier.
+    """
+    def __init__(self, identifier):
+        self.identifier = identifier
+
+    def __str__(self):
+        return "Edge with identifier \"%s\"" % self.identifier
 
 class SimpleGraph(object):
-    """ Simple graph with dictionary consisting of Node objects which
+    """ Simple graph with a dictionary consisting of Node objects which
     are part of the graph. The Graph object is thought to be an input
-    to a graph algorithem.
+    to a graph algorithm.
     """
     def __init__(self):
         self.nodes = {}
+        self.edges = self.getEdges() #doesn't work (to fix)
 
     def __str__(self):
         return "Graph object with nodes: %s" % self.nodes.keys()
@@ -64,12 +82,41 @@ class SimpleGraph(object):
         if not directed:
             del self.nodes[end.identifier].neighbours[start.identifier]
 
+    def getEdges(self):
+        """ Return a list of Edge objects which form the graph.
+        Returns every edge two times allthought the weight ist the same (to fix).
+        """
+        lst = []
+        for node in self.nodes.values():
+            for neighbour, weight in node.neighbours.items():
+                edge = str(node.identifier + neighbour + str(weight))
+                print(edge)
+                if edge not in self.edges:
+                    lst.append(edge)
+        print(lst)
+        return lst
+
     def printAdjacencyList(self):
         for n in self.nodes.values():
             print("%s: %s" % (n.identifier, [str(i) for i in n.neighbours.keys()]))
 
+class GraphRelation(object):
+    """ Class to define the relation between to graphs.
+    """
+    pass
+
+def relateGraphs(graph1, graph2, relation):
+    """ Function to actually set the relation of two graphs. Makes
+    use of the GraphRelation object.
+    """
+    pass
+
+
+""" This section is used to define algorithms
+"""
+
 def diffColorNeighbours(graph, start):
-    """ Function to apply different colors to neighbours.
+    """ Graph algorithem: applies different colors to neighbours.
     """
     def initDiffColorNeighbours(g, colors):
         """ Subfunction to initialize the graph for calculation of different colors
@@ -100,6 +147,13 @@ def diffColorNeighbours(graph, start):
 
     queue = [start.identifier]
     while len(queue) > 0:
+        """ The actual algorithm. Takes the first node in the queue, marks
+        it as visited, checks which colors are already applied to the
+        neighbours of the node, assigns the first color of the residual
+        color list to the node, updates the queue and finally removes the
+        actual node from the queue, to start the whole processes with the
+        next node in the queue.
+        """
         node = graph.nodes[queue[0]]
         node.visited = True
 
@@ -141,6 +195,11 @@ if __name__ == "__main__":
     g.addEdge(G,F)
 
     g.printAdjacencyList()
+    print("")
+    print(g.edges)
+    g.edges=g.getEdges()
+    print(g.edges)
+    print("")
 
     diffColorNeighbours(g, A)
 
