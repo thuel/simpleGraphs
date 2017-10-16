@@ -48,9 +48,9 @@ class SimpleGraph(object):
     are part of the graph. The Graph object is thought to be an input
     to a graph algorithm.
     """
+    
     def __init__(self):
         self.nodes = {}
-        self.edges = self.getEdges() #doesn't work (to fix)
 
     def __str__(self):
         return "Graph object with nodes: %s" % self.nodes.keys()
@@ -82,6 +82,19 @@ class SimpleGraph(object):
         if not directed:
             del self.nodes[end.identifier].neighbours[start.identifier]
 
+    @property
+    def edges(self):
+        """ Return a list of Edge objects which form the graph.
+        Returns every edge two times allthought the weight ist the same (to fix).
+        """
+        lst = []
+        for node in self.nodes.values():
+            for neighbour, weight in node.neighbours.items():
+                if str(neighbour + node.identifier + str(weight)) not in lst:
+                    edge = Edge(str(node.identifier + neighbour + str(weight)))
+                    lst.append(edge)
+        return lst
+    
     def getEdges(self):
         """ Return a list of Edge objects which form the graph.
         Returns every edge two times allthought the weight ist the same (to fix).
@@ -90,10 +103,8 @@ class SimpleGraph(object):
         for node in self.nodes.values():
             for neighbour, weight in node.neighbours.items():
                 edge = str(node.identifier + neighbour + str(weight))
-                print(edge)
                 if edge not in self.edges:
                     lst.append(edge)
-        print(lst)
         return lst
 
     def printAdjacencyList(self):
@@ -188,7 +199,6 @@ if __name__ == "__main__":
     g.addEdge(A,E)
     g.addEdge(B,E)
     g.addEdge(B,D)
-    g.addEdge(B,A)
     g.addEdge(E,D)
     g.addEdge(E,G)
     g.addEdge(D,F)
@@ -197,11 +207,11 @@ if __name__ == "__main__":
     g.printAdjacencyList()
     print("")
     print(g.edges)
-    g.edges=g.getEdges()
-    print(g.edges)
+    print("")
+    print(g.nodes)
     print("")
 
     diffColorNeighbours(g, A)
-
+    print("")
     diffColorNeighbours(g, E)
     
