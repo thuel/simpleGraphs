@@ -30,15 +30,23 @@ class Node(object):
     def __init__(self, identifier):
         self.identifier = identifier
         self.neighbours = {}
+        self.edges = {}
 
     def __str__(self):
         return "Node \"%s\" with neighbours: %s" % (self.identifier, self.neighbours)
     
 class Edge(object):
-    """ Edge object initialized with an identifier.
+    """ Edge object initialized with an identifier, start and end Node object.
     """
-    def __init__(self, identifier):
+    def __init__(self, identifier, start, end, isDirected=False):
         self.identifier = identifier
+        self.start = start
+        self.end = end
+        if isDirected is None:
+            """Reset argument in case multiple objects are initaliezed
+            """
+            isDireced = False
+        self.isDirected = isDirected
 
     def __str__(self):
         return "Edge with identifier \"%s\"" % self.identifier
@@ -51,6 +59,7 @@ class SimpleGraph(object):
     
     def __init__(self):
         self.nodes = {}
+        self.edges = {}
 
     def __str__(self):
         return "Graph object with nodes: %s" % self.nodes.keys()
@@ -63,58 +72,68 @@ class SimpleGraph(object):
     def addEdge(self, start, end, weight=1, directed=False):
         """ Add an edge to the Graph object. Opionally indicate the weight or cost and
         the direction of the edge.
+            start: Node object representing the start of the edge
+            end: Node object representing the end of the edge
+            weight: length, cost or something else representing the weight of the edge
+            directed: True if the edge can only be traversed from start to end 
         """
+        if weight is None or weight is '':
+            weight = 1
+        if directed is None:
+            directed = False
         if start.identifier not in self.nodes:
             return "Couldn't add Edge. Node %s not part of the graph." % start.identifier
         if end.identifier not in self.nodes:
             return "Couldn't add Edge. Node %s not part of the graph." % end.identifier
-        if end.identifier not in self.nodes[start.identifier].neighbours:
-            self.nodes[start.identifier].neighbours[end.identifier] = weight
-            if not directed and start.identifier not in self.nodes[end.identifier].neighbours:
-                self.nodes[end.identifier].neighbours[start.identifier] = weight
+        if end.identifier not in start.neighbours:
+            start.neighbours[end.identifier] = weight
+            newEdge = Edge(str(start.identifier + end.identifier + str(weight)), start, end)
+            if not directed and start.identifier not in end.neighbours:
+                end.neighbours[start.identifier] = weight
+                self.edges[newEdge.identifier] = newEdge
+            else:
+                newEdge.isDirected = True
+                self.edges[newEdge.identifier] = newEdge
+            start.edges[newEdge.identifier] = newEdge
+            end.edges[newEdge.identifier] = newEdge
             return "Edge between %s and %s successfully added to graph." % (start.identifier, end.identifier)
         return "There is already an edge between %s and %s." % (start.identifier, end.identifier)
 
     def removeEdge(self, start, end, directed=False):
         """ Remove an edge between two nodes. Optionally indicate wether the edge is directed.
         """
-        del self.nodes[start.identifier].neighbours[end.identifier]
-        if not directed:
-            del self.nodes[end.identifier].neighbours[start.identifier]
+        """ Prelimary variable definitions """
+        startId = start.identifier
+        endId = end.identifier
+        weight = str(start.neighbours[endId])
+        edgeId = str(startId + endId + weight)
 
-    @property
-    def edges(self):
-        """ Return a list of Edge objects which form the graph.
-        Returns every edge two times allthought the weight ist the same (to fix).
+        if self.edges[edgeId].isDirected != directed:
+            """ Assure the edge to be removed has the direction indicated in
+            the function call.
+            """
+            print("Couldn't remove Edge object. The direction indicated doesn't match the edge's direction")
+            #raise ValueError("direction error"); instead exit funciton:
+            return
+        
+        del self.nodes[startId].neighbours[endId] # unlink end from start
+        del start.edges[edgeId] # remove reference to edge from start Node
+        if not directed:
+            del self.nodes[endId].neighbours[startId] # unlink start from end
+            del end.edges[edgeId] # remove reference to edge from end Node
+        del self.edges[edgeId] # remove reference to edge from Graph
+        """ Delete the references to the Edge object, checking for direction.
         """
-        lst = []
-        for node in self.nodes.values():
-            for neighbour, weight in node.neighbours.items():
-                if str(neighbour + node.identifier + str(weight)) not in lst:
-                    edge = Edge(str(node.identifier + neighbour + str(weight)))
-                    lst.append(edge)
-        return lst
-    
-    def getEdges(self):
-        """ Return a list of Edge objects which form the graph.
-        Returns every edge two times allthought the weight ist the same (to fix).
-        """
-        lst = []
-        for node in self.nodes.values():
-            for neighbour, weight in node.neighbours.items():
-                edge = str(node.identifier + neighbour + str(weight))
-                if edge not in self.edges:
-                    lst.append(edge)
-        return lst
 
     def printAdjacencyList(self):
         for n in self.nodes.values():
             print("%s: %s" % (n.identifier, [str(i) for i in n.neighbours.keys()]))
 
-class GraphRelation(object):
-    """ Class to define the relation between to graphs.
+class GraphRelations(object):
+    """ Class to define the relation between two graphs.
     """
-    pass
+    def __init__(self): 
+        pass
 
 def relateGraphs(graph1, graph2, relation):
     """ Function to actually set the relation of two graphs. Makes
@@ -127,7 +146,8 @@ def relateGraphs(graph1, graph2, relation):
 """
 
 def diffColorNeighbours(graph, start):
-    """ Graph algorithem: applies different colors to neighbours.
+    """ Graph algorithem: applies different colors to neighbours. Takes Graph object
+    and starting Node object as arguments.
     """
     def initDiffColorNeighbours(g, colors):
         """ Subfunction to initialize the graph for calculation of different colors
@@ -153,6 +173,7 @@ def diffColorNeighbours(graph, start):
         d = g.nodes
         for n in nodeList:
             print("Node: %s\t\tColor: %s\tN. colors: %s" % (d[n].identifier, d[n].color, [str(g.nodes[i].color) for i in d[n].neighbours]))
+
     colors = []
     initDiffColorNeighbours(graph, colors)
 
