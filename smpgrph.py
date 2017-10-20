@@ -16,6 +16,7 @@ from builtins import *
 into the command line.
 """
 from priodict import priorityDictionary
+import math
 
 """Define classes of this library
 """
@@ -129,11 +130,75 @@ class SimpleGraph(object):
         for n in self.nodes.values():
             print("%s: %s" % (n.identifier, [str(i) for i in n.neighbours.keys()]))
 
+class OneColumnTable(object):
+    """ Class to create a table with one column from a list.
+    """
+    def __init__(self, dataList, withHeaders=False):
+        def setupTable(self, dataList):
+            """ Convert the data List to dictionary of table cells. The dataList
+            is a list of list(s).
+            """
+            self.headers = []
+            if withHeaders:
+                for col in range(self.numColumns):
+                    self.headers.append(dataList[col][0])
+                    del dataList[col][0]
+                self.numRows -= 1
+            else:
+                divider = math.ceil(self.numColumns/26)
+                for i in range(divider):
+                    first = ""
+                    if i > 0:
+                        first = chr(i+65)
+                    for col in range(self.numColumns):
+                        self.headers.append(first+chr(col+65))
+            data = {}
+            for col in range(self.numColumns):
+                for row in range(self.numRows):
+                    cellId = "c" + str(col) + "r" + str(row)
+                    data[cellId] = dataList[col][row]
+            return data
+        
+        self.numColumns = len(dataList)
+        self.numRows = len(dataList[0])
+        self.data = setupTable(self, dataList)
+
+    def printTable(self):
+        """ Print out the table.
+        """
+        columnWidth = max(len(max(self.data.values(), key=len)), len(max(self.headers, key=len)))
+        print("="*(columnWidth + 4))
+        for col in range(self.numColumns):
+                header = str(self.headers[col])
+                header = "| " + header + " "*(columnWidth - len(header)) +" |"
+                print(header)
+                print("="*(columnWidth + 4)) 
+        for col in range(self.numColumns):
+            for row in range(self.numRows):
+                cellId = "c" + str(col) + "r" + str(row)
+                cell = str(self.data[cellId])
+                cell = "| " + cell + " "*(columnWidth - len(cell)) +" |"
+                print(cell)
+                print("-"*(columnWidth + 4))            
+        
+        
+
 class GraphRelations(object):
     """ Class to define the relation between two graphs.
     """
     def __init__(self): 
         pass
+
+""" Define functions and methods for this library
+"""
+
+def setupGraph(name, nodesTbl, edgesTbl):
+    """ Function to set up a Graph object.
+        name = name of the Graph object
+        nodesTbl = a table of nodes (identifier needed, further attributes welcome)
+        edgesTbl = a table of edges (identifier, start, end needed, weight and direction optional)
+    """
+    pass
 
 def relateGraphs(graph1, graph2, relation):
     """ Function to actually set the relation of two graphs. Makes
@@ -235,4 +300,12 @@ if __name__ == "__main__":
     diffColorNeighbours(g, A)
     print("")
     diffColorNeighbours(g, E)
+    print("")
+    print("With headers")
+    tab = OneColumnTable([['Colors', 'brown', 'green', 'brown', 'brown'], ['Status', 'brown', 'green', 'brown', 'brown']], True)
+    tab.printTable()
+    print("")
+    print("Without headers")
+    tab2 = OneColumnTable([['brown', 'green', 'brown', 'brown']], False)
+    tab2.printTable()
     
