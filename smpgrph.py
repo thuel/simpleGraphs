@@ -21,6 +21,120 @@ import math
 """Define classes of this library
 """
 
+class Table(object):
+    """ Class to create a table with from a list of lists.
+    """
+    def __init__(self, dataList, withHeaders=False):
+        def setupTable(self, dataList):
+            """ Convert the data List to dictionary of table cells. The dataList
+            is a list of list(s).
+            """
+            self.headers = []
+            if withHeaders:
+                for col in range(self.numColumns):
+                    self.headers.append(dataList[col][0])
+                    del dataList[col][0]
+                self.numRows -= 1
+            else:
+                divider = math.ceil(self.numColumns/26)
+                for i in range(divider):
+                    first = ""
+                    if i > 0:
+                        first = chr(i+65)
+                    for col in range(self.numColumns):
+                        self.headers.append(first+chr(col+65))
+            data = {}
+            for col in range(self.numColumns):
+                for row in range(self.numRows):
+                    cellId = "c" + str(col) + "r" + str(row)
+                    data[cellId] = dataList[col][row]
+            return data
+        
+        self.numColumns = len(dataList)
+        self.numRows = len(dataList[0])
+        self.data = setupTable(self, dataList)
+
+    def printTable(self):
+        """ Print out the table.
+        """
+        border = 3 # spacing + 1
+        columnWidths = self.getColumnWidths()
+        tableWidth = sum(columnWidths)+(border * self.numColumns) +1
+        print("="*tableWidth)
+        header = "|"
+        for col in range(self.numColumns):
+                header += " " * int(math.floor(border/3)) + str(self.headers[col])
+                header += " "*(columnWidths[col] - len(self.headers[col])) +" |"
+        print(header)
+        print("="*tableWidth)
+
+        if self.data == {}:
+            return
+        else:
+            for row in range(self.numRows):
+                pRow = "|"
+                columnValues = self.getValuesFromRow(row)
+                for cell in range(len(columnValues)):
+                    pRow += " " + columnValues[cell] + " "*(columnWidths[cell] - len(columnValues[cell])) +" |"
+                print(pRow)
+                print("-"*tableWidth)            
+
+    def getValuesFromColumn(self, col):
+        """ Returns a list of the values in column col.
+        """
+        values = []
+        for row in range(self.numRows):
+            cellId = cellId = "c" + str(col) + "r" + str(row)
+            values.append(self.data[cellId])
+        return values
+
+    def getValuesFromRow(self, row):
+        """ Returns a list of the values in row row.
+        """
+        values = []
+        for col in range(self.numColumns):
+            cellId = cellId = "c" + str(col) + "r" + str(row)
+            values.append(self.data[cellId])
+        return values
+    
+    def getColumnWidths(self):
+        """ Returns a list with the column width of the longest data field
+        in every column.
+        """
+        columnWidths = []
+        for col in range(self.numColumns):
+            if self.data == {}:
+                columnWidths.append(len(self.headers[col]))
+            else:
+                columnWidths.append(max(len(max(self.getValuesFromColumn(col), key=len)), len(self.headers[col])))
+        return columnWidths    
+
+class attributeTable(Table):
+    """ Class of a special table with a given number of columns with given
+    column headers. Used to give an overview of the attributes to assign to
+    the Node and Edge objects of a graph object. The object is used to init
+    a Graph object with further functionality.
+    """
+    def __init__(self, dataList=[[]]):
+        def setupTable(self, dataList):
+            """ Convert the data List to dictionary of table cells. The dataList
+            is a list of list(s).
+            """
+            self.headers = ["Name", "Context", "Notes"]
+            data = {}
+            for col in range(self.numColumns):
+                for row in range(self.numRows):
+                    cellId = "c" + str(col) + "r" + str(row)
+                    data[cellId] = dataList[col][row]
+            return data
+        
+        if len(dataList) > 3:
+            print("Too many columns in dataList")
+            return
+        self.numColumns = 3
+        self.numRows = len(dataList[0])
+        self.data = setupTable(self, dataList)
+    
 class Node(object):
     """ Node object initialized with an identifier. The Node object has
     dictionary called "neighbours" in which the neighbouring nodes in a
@@ -57,10 +171,15 @@ class SimpleGraph(object):
     are part of the graph. The Graph object is thought to be an input
     to a graph algorithm.
     """
-    
-    def __init__(self):
+    def __init__(self, attributes=attributeTable(dataList = [[]]), setupRoutines=Table(dataList = [[]])):
         self.nodes = {}
         self.edges = {}
+        if attributes is None:
+            attributes = Table(dataList = [[]])
+        self.attributes = attributes
+        if setupRoutines is None:
+            setupRoutines = Table(dataList = [[]])
+        self.setupRoutines = setupRoutines
 
     def __str__(self):
         return "Graph object with nodes: %s" % self.nodes.keys()
@@ -68,6 +187,9 @@ class SimpleGraph(object):
     def addNode(self, node):
         """ Add a node to the Graph object.
         """
+        if node.identifier in self.nodes:
+            print("Node %s already in graph. Skipping." % node.identifier)
+            return
         self.nodes[node.identifier] = node
 
     def addEdge(self, start, end, weight=1, directed=False):
@@ -130,58 +252,7 @@ class SimpleGraph(object):
         for n in self.nodes.values():
             print("%s: %s" % (n.identifier, [str(i) for i in n.neighbours.keys()]))
 
-class OneColumnTable(object):
-    """ Class to create a table with one column from a list.
-    """
-    def __init__(self, dataList, withHeaders=False):
-        def setupTable(self, dataList):
-            """ Convert the data List to dictionary of table cells. The dataList
-            is a list of list(s).
-            """
-            self.headers = []
-            if withHeaders:
-                for col in range(self.numColumns):
-                    self.headers.append(dataList[col][0])
-                    del dataList[col][0]
-                self.numRows -= 1
-            else:
-                divider = math.ceil(self.numColumns/26)
-                for i in range(divider):
-                    first = ""
-                    if i > 0:
-                        first = chr(i+65)
-                    for col in range(self.numColumns):
-                        self.headers.append(first+chr(col+65))
-            data = {}
-            for col in range(self.numColumns):
-                for row in range(self.numRows):
-                    cellId = "c" + str(col) + "r" + str(row)
-                    data[cellId] = dataList[col][row]
-            return data
-        
-        self.numColumns = len(dataList)
-        self.numRows = len(dataList[0])
-        self.data = setupTable(self, dataList)
-
-    def printTable(self):
-        """ Print out the table.
-        """
-        columnWidth = max(len(max(self.data.values(), key=len)), len(max(self.headers, key=len)))
-        print("="*(columnWidth + 4))
-        for col in range(self.numColumns):
-                header = str(self.headers[col])
-                header = "| " + header + " "*(columnWidth - len(header)) +" |"
-                print(header)
-                print("="*(columnWidth + 4)) 
-        for col in range(self.numColumns):
-            for row in range(self.numRows):
-                cellId = "c" + str(col) + "r" + str(row)
-                cell = str(self.data[cellId])
-                cell = "| " + cell + " "*(columnWidth - len(cell)) +" |"
-                print(cell)
-                print("-"*(columnWidth + 4))            
-        
-        
+                  
 
 class GraphRelations(object):
     """ Class to define the relation between two graphs.
@@ -302,10 +373,12 @@ if __name__ == "__main__":
     diffColorNeighbours(g, E)
     print("")
     print("With headers")
-    tab = OneColumnTable([['Colors', 'brown', 'green', 'brown', 'brown'], ['Status', 'brown', 'green', 'brown', 'brown']], True)
+    tab = Table([['Colors', 'brown', 'green', 'brown', 'brown'], \
+                          ['Status', 'brown', 'green', 'brown', 'brown'], \
+                          ['Long Word', 'you thought?', 'no way baby!', 'yes, sir!', 'brown fox']], True)
     tab.printTable()
     print("")
     print("Without headers")
-    tab2 = OneColumnTable([['brown', 'green', 'brown', 'brown']], False)
+    tab2 = Table([['brown', 'green', 'brown', 'brown']], False)
     tab2.printTable()
     
