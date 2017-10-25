@@ -120,7 +120,33 @@ class attributeTable(Table):
             """ Convert the data List to dictionary of table cells. The dataList
             is a list of list(s).
             """
-            self.headers = ["Name", "Context", "Notes"]
+            self.headers = ["Name", "Networkcontext", "Type", "Computed"]
+            data = {}
+            for col in range(self.numColumns):
+                for row in range(self.numRows):
+                    cellId = "c" + str(col) + "r" + str(row)
+                    data[cellId] = dataList[col][row]
+            return data
+        
+        if len(dataList) > 4:
+            print("Too many columns in dataList")
+            return
+        self.numColumns = 4
+        self.numRows = len(dataList[0])
+        self.data = setupTable(self, dataList)
+
+class setupRoutinesTable(Table):
+    """ Class of a special table with a given number of columns with given
+    column headers. Used to give an overview of the attributes to assign to
+    the Node and Edge objects of a graph object. The object is used to init
+    a Graph object with further functionality.
+    """
+    def __init__(self, dataList=[[]]):
+        def setupTable(self, dataList):
+            """ Convert the data List to dictionary of table cells. The dataList
+            is a list of list(s).
+            """
+            self.headers = ["Field", "Formulae", "Comment"]
             data = {}
             for col in range(self.numColumns):
                 for row in range(self.numRows):
@@ -134,7 +160,7 @@ class attributeTable(Table):
         self.numColumns = 3
         self.numRows = len(dataList[0])
         self.data = setupTable(self, dataList)
-    
+        
 class Node(object):
     """ Node object initialized with an identifier. The Node object has
     dictionary called "neighbours" in which the neighbouring nodes in a
@@ -171,7 +197,7 @@ class SimpleGraph(object):
     are part of the graph. The Graph object is thought to be an input
     to a graph algorithm.
     """
-    def __init__(self, attributes=attributeTable(dataList = [[]]), setupRoutines=Table(dataList = [[]])):
+    def __init__(self, attributes=attributeTable(dataList = [[]]), setupRoutines = setupRoutinesTable(dataList = [[]])):
         self.nodes = {}
         self.edges = {}
         if attributes is None:
@@ -187,6 +213,8 @@ class SimpleGraph(object):
     def addNode(self, node):
         """ Add a node to the Graph object.
         """
+        if not isinstance(node, Node):
+            raise(ValueError, "Argument needs to be a node object.")
         if node.identifier in self.nodes:
             print("Node %s already in graph. Skipping." % node.identifier)
             return
@@ -195,19 +223,51 @@ class SimpleGraph(object):
     def addEdge(self, start, end, weight=1, directed=False):
         """ Add an edge to the Graph object. Opionally indicate the weight or cost and
         the direction of the edge.
-            start: Node object representing the start of the edge
-            end: Node object representing the end of the edge
+            start: Node object representing the start of the edge or the identifier
+                of an Node object as string
+            end: Node object representing the end of the edge or the identifier
+                of an Node object as string
             weight: length, cost or something else representing the weight of the edge
             directed: True if the edge can only be traversed from start to end 
+        """
+        try:
+            start = start.decode("utf-8")
+        except:
+            start = start
+        """ This is needed in case the function is called like addEdge("A", "B") instead of
+        addEdge(u"A", u"B").
+        """
+        if not isinstance(start, Node) and not isinstance(start, unicode) and not isinstance(start, int):
+            print("Argument start is of wrong type. Use Node, str or int.")
+            return
+        if not isinstance(end, Node) and not isinstance(end, unicode) and not isinstance(end, int):
+            print("Argument end is of wrong type. Use Node, str or int.")
+            return
+        """Ensure start and end are of the right type.
         """
         if weight is None or weight is '':
             weight = 1
         if directed is None:
             directed = False
-        if start.identifier not in self.nodes:
-            return "Couldn't add Edge. Node %s not part of the graph." % start.identifier
-        if end.identifier not in self.nodes:
-            return "Couldn't add Edge. Node %s not part of the graph." % end.identifier
+        """ Reset weight and directed in case no argument is provided and the function was
+        called with arguments before.
+        """
+        if isinstance(start, unicode) or isinstance(start, int):
+            start = Node(start)
+            self.addNode(start)
+        if isinstance(end, unicode) or isinstance(end, int):
+            end = Node(end)
+            self.addNode(end)
+        """ Add missing Nodes to the Graph object.
+        """
+        if not self.isInGraph(start):
+            print("Couldn't add Edge. Node %s not part of the graph." % start.identifier)
+            return 
+        if not self.isInGraph(end):
+            print("Couldn't add Edge. Node %s not part of the graph." % end.identifier)
+            return
+        """ Ensure start and end are in the Graph object in case their given as Node objects.
+        """
         if end.identifier not in start.neighbours:
             start.neighbours[end.identifier] = weight
             newEdge = Edge(str(start.identifier + end.identifier + str(weight)), start, end)
@@ -248,11 +308,26 @@ class SimpleGraph(object):
         """ Delete the references to the Edge object, checking for direction.
         """
 
+    def isInGraph(self, nodeOrEdge):
+        """ Returns True if the Node or Edge object provided is part of the Graph object.
+        """
+        if isinstance(nodeOrEdge, Node):
+            return nodeOrEdge.identifier in self.nodes
+        elif isinstance(nodeOrEdge, Edge):
+            return nodeOrEdge.identifier in self.edges
+        else:
+            print("Wrong type provided. Use Node or Edge object as argument.")
+
     def printAdjacencyList(self):
         for n in self.nodes.values():
             print("%s: %s" % (n.identifier, [str(i) for i in n.neighbours.keys()]))
 
-                  
+    def printEdges(self):
+        edgeList = sorted(self.edges.values())
+        tblEdges = Table([['Edge_ID']+[x.identifier for x in edgeList], \
+                      ['Start']+[x.start.identifier for x in edgeList], \
+                      ['End']+[x.end.identifier for x in edgeList]], True)
+        tblEdges.printTable()
 
 class GraphRelations(object):
     """ Class to define the relation between two graphs.
@@ -381,4 +456,7 @@ if __name__ == "__main__":
     print("Without headers")
     tab2 = Table([['brown', 'green', 'brown', 'brown']], False)
     tab2.printTable()
+    
+    print('')
+    g.printEdges()
     
