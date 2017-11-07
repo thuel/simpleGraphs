@@ -147,6 +147,8 @@ class setupRoutinesTable(Table):
             is a list of list(s).
             """
             self.headers = ["Field", "Formulae", "Comment"]
+            """ Where Field is either Node, Edge or a variable definition starting
+            with a dollar sign."""
             data = {}
             for col in range(self.numColumns):
                 for row in range(self.numRows):
@@ -338,7 +340,32 @@ class GraphRelations(object):
 """ Define functions and methods for this library
 """
 
-def setupGraph(name, nodesTbl, edgesTbl):
+def excelToTable(excelTbl, withHeaders=True):
+    """ Returns a Table object from a excel workbook with one sheet.
+    Expects data to begin in top left cell of the first sheet.
+        excelTbl = path to the excel table
+        withHeaders = indicates if excel table contains header information
+    """
+    from xlrd import open_workbook as openwb
+    import os
+    if withHeaders is None:
+        withHeaders = True
+    filename, ext = os.path.splitext(excelTbl)
+    if ext in ['xlsx', 'xls']:
+        ext = ""
+    else:
+        ext = ".xlsx"
+    try:
+        wb = openwb(excelTbl + ext)
+    except:
+        raise ValueError("file needs to be xlsx or path specified including extension.")
+    sheet = wb.sheets()[0]
+    dataList = []
+    for col in range(sheet.row_len(0)):
+        dataList.append(sheet.col_values(col))
+    return Table(dataList, withHeaders)
+
+def setupGraph(nodesTbl, edgesTbl):
     """ Function to set up a Graph object.
         name = name of the Graph object
         nodesTbl = a table of nodes (identifier needed, further attributes welcome)
@@ -408,7 +435,49 @@ def diffColorNeighbours(graph, start):
 
     printDiffColors(graph)
 
-
+def xmasElves(graph):
+    """ Algorithem to randomly assign each node to only one neighbouring node and
+    have every node connected to only one node in the resulting graph. Could
+    be used to assign elves for X-mas.
+    """
+    import random
+    def initPossibleElves(graph):
+        """ Initialise the graph for the problem to be solved.
+        """
+        for n in graph.nodes.values():
+            n.visited = False
+            n.distance = float('inf')
+            n.presentee = None
+            
+    initPossibleElves(graph)
+    d = graph.nodes
+    queue = [random.choice(list(d))]
+    while len(queue) > 0:
+        node = d[queue[0]]
+        node.visited = True
+        node.presentee = random.choice(list(node.neighbours))
+        for n in d.values():
+            if n is not node:
+                try:
+                    graph.removeEdge(n, d[node.presentee],directed=True)
+                except:
+                    continue
+        removeLst = [n for n in node.neighbours if n != node.presentee]
+        for n in removeLst:
+            try:
+                graph.removeEdge(node, d[n], directed=True)
+            except:
+                print("couldn't remove %s from neighbours of %s" % (n, node.identifier))
+                continue
+        minPossibilities = min([n for n in d.values()], len(n.neighbours))
+        for n in d.values():
+            if len(n.neighbours) == minPossibilities and not n.visited:
+                queue.append(n.identifier)
+                break
+        queue.extend([d[n].identifier for n in d.keys() if not d[n].visited and d[n].identifier not in queue])
+        queue = queue[1:]
+    for n in d.values():
+        print("%s ist Wichtel von %s." % (n.identifier, n.presentee))
     
 if __name__ == "__main__":
     A = Node("A")
@@ -459,4 +528,68 @@ if __name__ == "__main__":
     
     print('')
     g.printEdges()
+    
+    print('')
+    newTab = excelToTable("inputtables\\testtbl")
+    newTab.printTable()
+
+    print('xmas elves starting here')
+    A = Node("Lukas")
+    B = Node("Lena")
+    C = Node("Eva")
+    D = Node("Christine")
+    E = Node("Fritz")
+    F = Node("Freddy")
+    G = Node("Barbara S.")
+    H = Node("Michael")
+    I = Node("Barbara R.")
+    x = SimpleGraph()
+    x.addNode(A)
+    x.addNode(B)
+    x.addNode(C)
+    x.addNode(D)
+    x.addNode(E)
+    x.addNode(F)
+    x.addNode(G)
+    x.addEdge(A,B,directed=True)
+    x.addEdge(A,C,directed=True)
+    x.addEdge(A,D,directed=True)
+    x.addEdge(A,E,directed=True)
+    x.addEdge(A,F,directed=True)
+    x.addEdge(B,A,directed=True)
+    x.addEdge(B,C,directed=True)
+    x.addEdge(B,D,directed=True)
+    x.addEdge(B,E,directed=True)
+    x.addEdge(B,F,directed=True)
+    x.addEdge(B,G,directed=True)
+    x.addEdge(C,B,directed=True)
+    x.addEdge(C,A,directed=True)
+    x.addEdge(C,D,directed=True)
+    x.addEdge(C,E,directed=True)
+    x.addEdge(C,G,directed=True)
+    x.addEdge(D,B,directed=True)
+    x.addEdge(D,C,directed=True)
+    x.addEdge(D,A,directed=True)
+    x.addEdge(D,G,directed=True)
+    x.addEdge(D,F,directed=True)
+    x.addEdge(E,B,directed=True)
+    x.addEdge(E,C,directed=True)
+    x.addEdge(E,G,directed=True)
+    x.addEdge(E,A,directed=True)
+    x.addEdge(E,F,directed=True)
+    x.addEdge(F,B,directed=True)
+    x.addEdge(F,G,directed=True)
+    x.addEdge(F,D,directed=True)
+    x.addEdge(F,E,directed=True)
+    x.addEdge(F,A,directed=True)
+    x.addEdge(G,B,directed=True)
+    x.addEdge(G,C,directed=True)
+    x.addEdge(G,D,directed=True)
+    x.addEdge(G,E,directed=True)
+    x.addEdge(G,F,directed=True)
+
+    x.printAdjacencyList()
+    xmasElves(x)
+    
+
     
