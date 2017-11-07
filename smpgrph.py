@@ -438,7 +438,8 @@ def diffColorNeighbours(graph, start):
 def xmasElves(graph):
     """ Algorithem to randomly assign each node to only one neighbouring node and
     have every node connected to only one node in the resulting graph. Could
-    be used to assign elves for X-mas.
+    be used to assign elves for X-mas. Returns a list of tuples like:
+    (elf, presentee, email).
     """
     import random
     def initPossibleElves(graph):
@@ -483,8 +484,7 @@ def xmasElves(graph):
     for n in d.values():
         if n.presentee not in elves:
             raise(ValueError, "Run led to node with no neighbours. Please reexecute.")
-    for n in d.values():
-        print("%s ist Wichtel von %s." % (n.identifier, n.presentee))
+    
     
 if __name__ == "__main__":
     A = Node("A")
@@ -554,5 +554,7 @@ if __name__ == "__main__":
             if elf != presentee and presentee.identifier != elf.partner:
                 x.addEdge(elf, presentee, directed=True)
     xmasElves(x)
+    for n in x.nodes.values():
+        print("%s mit E-Mail %s ist Wichtel von %s." % (n.identifier, n.email, n.presentee))
     
-    
+   
