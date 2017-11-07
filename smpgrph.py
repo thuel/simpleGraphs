@@ -448,14 +448,18 @@ def xmasElves(graph):
             n.visited = False
             n.distance = float('inf')
             n.presentee = None
-            
+
+    elves = graph.nodes.keys()        
     initPossibleElves(graph)
     d = graph.nodes
     queue = [random.choice(list(d))]
     while len(queue) > 0:
         node = d[queue[0]]
         node.visited = True
-        node.presentee = random.choice(list(node.neighbours))
+        try:
+            node.presentee = random.choice(list(node.neighbours))
+        except:
+            node.presentee = ""
         for n in d.values():
             if n is not node:
                 try:
@@ -476,6 +480,9 @@ def xmasElves(graph):
                 break
         queue.extend([d[n].identifier for n in d.keys() if not d[n].visited and d[n].identifier not in queue])
         queue = queue[1:]
+    for n in d.values():
+        if n.presentee not in elves:
+            raise(ValueError, "Run led to node with no neighbours. Please reexecute.")
     for n in d.values():
         print("%s ist Wichtel von %s." % (n.identifier, n.presentee))
     
@@ -534,62 +541,18 @@ if __name__ == "__main__":
     newTab.printTable()
 
     print('xmas elves starting here')
-    A = Node("Lukas")
-    B = Node("Lena")
-    C = Node("Eva")
-    D = Node("Christine")
-    E = Node("Fritz")
-    F = Node("Freddy")
-    G = Node("Barbara S.")
-    H = Node("Michael")
-    I = Node("Barbara R.")
+    xmasTab = excelToTable("inputtables\\wichtel")
     x = SimpleGraph()
-    x.addNode(A)
-    x.addNode(B)
-    x.addNode(C)
-    x.addNode(D)
-    x.addNode(E)
-    x.addNode(F)
-    x.addNode(G)
-    x.addEdge(A,B,directed=True)
-    x.addEdge(A,C,directed=True)
-    x.addEdge(A,D,directed=True)
-    x.addEdge(A,E,directed=True)
-    x.addEdge(A,F,directed=True)
-    x.addEdge(B,A,directed=True)
-    x.addEdge(B,C,directed=True)
-    x.addEdge(B,D,directed=True)
-    x.addEdge(B,E,directed=True)
-    x.addEdge(B,F,directed=True)
-    x.addEdge(B,G,directed=True)
-    x.addEdge(C,B,directed=True)
-    x.addEdge(C,A,directed=True)
-    x.addEdge(C,D,directed=True)
-    x.addEdge(C,E,directed=True)
-    x.addEdge(C,G,directed=True)
-    x.addEdge(D,B,directed=True)
-    x.addEdge(D,C,directed=True)
-    x.addEdge(D,A,directed=True)
-    x.addEdge(D,G,directed=True)
-    x.addEdge(D,F,directed=True)
-    x.addEdge(E,B,directed=True)
-    x.addEdge(E,C,directed=True)
-    x.addEdge(E,G,directed=True)
-    x.addEdge(E,A,directed=True)
-    x.addEdge(E,F,directed=True)
-    x.addEdge(F,B,directed=True)
-    x.addEdge(F,G,directed=True)
-    x.addEdge(F,D,directed=True)
-    x.addEdge(F,E,directed=True)
-    x.addEdge(F,A,directed=True)
-    x.addEdge(G,B,directed=True)
-    x.addEdge(G,C,directed=True)
-    x.addEdge(G,D,directed=True)
-    x.addEdge(G,E,directed=True)
-    x.addEdge(G,F,directed=True)
-
-    x.printAdjacencyList()
+    for i in range(xmasTab.numRows):
+        A = Node(xmasTab.getValuesFromColumn(0)[i])
+        A.email = xmasTab.getValuesFromColumn(1)[i]
+        A.partner = xmasTab.getValuesFromColumn(2)[i]
+        x.addNode(A)
+    elves = x.nodes.values()
+    for elf in elves:
+        for presentee in elves:
+            if elf != presentee and presentee.identifier != elf.partner:
+                x.addEdge(elf, presentee, directed=True)
     xmasElves(x)
     
-
     
