@@ -379,6 +379,43 @@ def relateGraphs(graph1, graph2, relation):
     """
     pass
 
+def sendMail(sender, receiver, subject, message):
+    """ Function to send mail.
+    """
+    import smtplib
+    if type(receiver) is not type([]):
+        raise(ValueError, "Receiver is a list of receivers.")
+    receivers = ",".join(receiver)
+    mail = """From: %s
+To: %s
+Subject: %s
+
+%s
+""" % (sender, receivers, subject, message)
+
+    try:
+        smtpObj = smtplib.SMTP('steffen-steffen.ch',25)
+        smtpObj.sendmail(sender, receivers, mail)         
+        print("Successfully sent email")
+    except SMTPException:
+        print("Error: unable to send email")
+    
+def sendXmasElvesMail(graph):
+    """ Function to send E-Mails to the persons taking part in X-mas elves arrangement
+    where every person is the elf of another person making a present to this other
+    person. The Graph object had to be run through the xmasElves() algorithem
+    before calling this function.
+    """
+    data = []
+    for n in graph.nodes.values():
+        data.append((n.identifier, n.presentee, n.email))
+    cmds = []
+    for item in data:
+        cmds.append('echo "Hallo %s\n\nDu bist das Wichteli von %s.\n\n\
+Liebe Grüsse,\n\nDer automatische Wichtler" | mail -s \
+\'Wichtelauslosung\' -aFrom:Weihnachts\\ Wichtler\\<wichtler@domain.xyz\\> %s' % item)
+    for cmd in cmds:
+        print(cmd)
 
 """ This section is used to define algorithms
 """
@@ -554,6 +591,7 @@ if __name__ == "__main__":
             if elf != presentee and presentee.identifier != elf.partner:
                 x.addEdge(elf, presentee, directed=True)
     xmasElves(x)
+    sendXmasElvesMail(x)
     for n in x.nodes.values():
         print("%s mit E-Mail %s ist Wichtel von %s." % (n.identifier, n.email, n.presentee))
     
