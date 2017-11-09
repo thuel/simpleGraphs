@@ -16,7 +16,7 @@ from builtins import *
 into the command line.
 """
 from priodict import priorityDictionary
-import math
+import math, os
 
 """Define classes of this library
 """
@@ -46,7 +46,7 @@ class Table(object):
             data = {}
             for col in range(self.numColumns):
                 for row in range(self.numRows):
-                    cellId = "c" + str(col) + "r" + str(row)
+                    cellId = u"c" + str(col) + u"r" + str(row)
                     data[cellId] = dataList[col][row]
             return data
         
@@ -239,10 +239,14 @@ class SimpleGraph(object):
         """ This is needed in case the function is called like addEdge("A", "B") instead of
         addEdge(u"A", u"B").
         """
-        if not isinstance(start, Node) and not isinstance(start, unicode) and not isinstance(start, int):
+        try:
+            basestring
+        except NameError:
+            basestring = str
+        if not isinstance(start, Node) and not isinstance(start, basestring) and not isinstance(start, int):
             print("Argument start is of wrong type. Use Node, str or int.")
             return
-        if not isinstance(end, Node) and not isinstance(end, unicode) and not isinstance(end, int):
+        if not isinstance(end, Node) and not isinstance(end, basestring) and not isinstance(end, int):
             print("Argument end is of wrong type. Use Node, str or int.")
             return
         """Ensure start and end are of the right type.
@@ -254,10 +258,10 @@ class SimpleGraph(object):
         """ Reset weight and directed in case no argument is provided and the function was
         called with arguments before.
         """
-        if isinstance(start, unicode) or isinstance(start, int):
+        if isinstance(start, basestring) or isinstance(start, int):
             start = Node(start)
             self.addNode(start)
-        if isinstance(end, unicode) or isinstance(end, int):
+        if isinstance(end, basestring) or isinstance(end, int):
             end = Node(end)
             self.addNode(end)
         """ Add missing Nodes to the Graph object.
@@ -325,10 +329,11 @@ class SimpleGraph(object):
             print("%s: %s" % (n.identifier, [str(i) for i in n.neighbours.keys()]))
 
     def printEdges(self):
-        edgeList = sorted(self.edges.values())
-        tblEdges = Table([['Edge_ID']+[x.identifier for x in edgeList], \
-                      ['Start']+[x.start.identifier for x in edgeList], \
-                      ['End']+[x.end.identifier for x in edgeList]], True)
+        edgeList = list(sorted(self.edges.keys()))
+        edges = dict(self.edges)
+        tblEdges = Table([['Edge_ID']+[x for x in edgeList], \
+                      ['Start']+[edges[x].start.identifier for x in edgeList], \
+                      ['End']+[edges[x].end.identifier for x in edgeList]], True)
         tblEdges.printTable()
 
 class GraphRelations(object):
@@ -489,7 +494,7 @@ def xmasElves(graph):
 
     elves = graph.nodes.keys()        
     initPossibleElves(graph)
-    d = graph.nodes
+    d = dict(graph.nodes)
     queue = [random.choice(list(d))]
     while len(queue) > 0:
         node = d[queue[0]]
@@ -511,6 +516,7 @@ def xmasElves(graph):
             except:
                 print("couldn't remove %s from neighbours of %s" % (n, node.identifier))
                 continue
+        print([n for n in d.values()])
         minPossibilities = min([n for n in d.values()], len(n.neighbours))
         for n in d.values():
             if len(n.neighbours) == minPossibilities and not n.visited:
@@ -574,11 +580,11 @@ if __name__ == "__main__":
     g.printEdges()
     
     print('')
-    newTab = excelToTable("inputtables\\testtbl")
+    newTab = excelToTable(os.path.join(os.path.curdir, 'inputtables', 'testtbl'))
     newTab.printTable()
 
     print('xmas elves starting here')
-    xmasTab = excelToTable("inputtables\\wichtel")
+    xmasTab = excelToTable(os.path.join(os.path.curdir, 'inputtables', 'wichtel'))
     x = SimpleGraph()
     for i in range(xmasTab.numRows):
         A = Node(xmasTab.getValuesFromColumn(0)[i])
