@@ -403,7 +403,7 @@ Subject: %s
         smtpObj.sendmail(sender, receivers, mail)         
         print("Successfully sent email")
     except smtplib.SMTPException:
-        print("Error: unable to send email")
+        print("Error: unable to send email with receiver %s" % receivers)
     
 def sendXmasElvesMail(graph):
     """ Function to send E-Mails to the persons taking part in X-mas elves arrangement
@@ -416,9 +416,10 @@ def sendXmasElvesMail(graph):
         subject = "Wichtel Auslosung"
         sender = "wichtler@steffen-steffen.ch"
         receiver = [n.email]
-        msg = """ Hallo %s\n\nDu bist das Wichteli von %.\n\n\
-Liebe Grüsse\n\nDer automatische Wichtler""" % (n.identifier, n.presentee)
+        msg = "Hallo %s\n\nDu bist das Wichteli von %s.\n\n\
+Lieber Gruss\n\nDer automatische Wichtler" % (n.identifier, n.presentee)
         print(sender, receiver, subject, msg)
+        #sendMail(sender, receiver, subject, msg)
         
 """ This section is used to define algorithms
 """
@@ -601,4 +602,3 @@ if __name__ == "__main__":
     for n in x.nodes.values():
         print("%s mit E-Mail %s ist Wichtel von %s." % (n.identifier, n.email, n.presentee))
     
-   
