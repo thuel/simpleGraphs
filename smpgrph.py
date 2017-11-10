@@ -389,7 +389,7 @@ def sendMail(sender, receiver, subject, message):
     """
     import smtplib
     if type(receiver) is not type([]):
-        raise(ValueError, "Receiver is a list of receivers.")
+        raise ValueError("Receiver is a list of receivers.")
     receivers = ",".join(receiver)
     mail = """From: %s
 To: %s
@@ -402,7 +402,7 @@ Subject: %s
         smtpObj = smtplib.SMTP('steffen-steffen.ch',25)
         smtpObj.sendmail(sender, receivers, mail)         
         print("Successfully sent email")
-    except SMTPException:
+    except smtplib.SMTPException:
         print("Error: unable to send email")
     
 def sendXmasElvesMail(graph):
@@ -413,15 +413,13 @@ def sendXmasElvesMail(graph):
     """
     data = []
     for n in graph.nodes.values():
-        data.append((n.identifier, n.presentee, n.email))
-    cmds = []
-    for item in data:
-        cmds.append('echo "Hallo %s\n\nDu bist das Wichteli von %s.\n\n\
-Liebe Grüsse,\n\nDer automatische Wichtler" | mail -s \
-\'Wichtelauslosung\' -aFrom:Weihnachts\\ Wichtler\\<wichtler@domain.xyz\\> %s' % item)
-    for cmd in cmds:
-        print(cmd)
-
+        subject = "Wichtel Auslosung"
+        sender = "wichtler@steffen-steffen.ch"
+        receiver = [n.email]
+        msg = """ Hallo %s\n\nDu bist das Wichteli von %.\n\n\
+Liebe Grüsse\n\nDer automatische Wichtler""" % (n.identifier, n.presentee)
+        print(sender, receiver, subject, msg)
+        
 """ This section is used to define algorithms
 """
 
@@ -517,7 +515,9 @@ def xmasElves(graph):
                 print("couldn't remove %s from neighbours of %s" % (n, node.identifier))
                 continue
         print([n for n in d.values()])
-        minPossibilities = min([n for n in d.values()], len(n.neighbours))
+        minPossibilities = float('inf')
+        for n in d.values():
+            minPossibilities = min(len(n.neighbours), minPossibilities)
         for n in d.values():
             if len(n.neighbours) == minPossibilities and not n.visited:
                 queue.append(n.identifier)
@@ -526,7 +526,7 @@ def xmasElves(graph):
         queue = queue[1:]
     for n in d.values():
         if n.presentee not in elves:
-            raise(ValueError, "Run led to node with no neighbours. Please reexecute.")
+            raise ValueError("Run led to node with no neighbours. Please reexecute.")
     
     
 if __name__ == "__main__":
