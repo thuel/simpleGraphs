@@ -391,15 +391,19 @@ def sendMail(sender, receiver, subject, message):
     if type(receiver) is not type([]):
         raise ValueError("Receiver is a list of receivers.")
     receivers = ",".join(receiver)
-    mail = """From: %s
-To: %s
-Subject: %s
-
-%s
-""" % (sender, receivers, subject, message)
+    mail = "\r\n".join([
+        "From: %s" % sender,
+        "To: %s" % receivers,
+        "Subject: %s" % subject,
+        "",
+        "%s" % message
+        ])
 
     try:
-        smtpObj = smtplib.SMTP('steffen-steffen.ch',25)
+        smtpObj = smtplib.SMTP('smtp.gmail.com:587')
+        smtpObj.ehlo()
+        smtpObj.starttls()
+        smtpObj.login(sender, "mein.weihnachts.wichtler.mail.konto.sic!")
         smtpObj.sendmail(sender, receivers, mail)         
         print("Successfully sent email")
     except smtplib.SMTPException:
@@ -414,12 +418,12 @@ def sendXmasElvesMail(graph):
     data = []
     for n in graph.nodes.values():
         subject = "Wichtel Auslosung"
-        sender = "wichtler@steffen-steffen.ch"
+        sender = "weihnachts.wichtler@gmail.com"
         receiver = [n.email]
         msg = "Hallo %s\n\nDu bist das Wichteli von %s.\n\n\
 Lieber Gruss\n\nDer automatische Wichtler" % (n.identifier, n.presentee)
-        print(sender, receiver, subject, msg)
-        #sendMail(sender, receiver, subject, msg)
+        #print(sender, receiver, subject, msg)
+        sendMail(sender, receiver, subject, msg)
         
 """ This section is used to define algorithms
 """
@@ -515,7 +519,6 @@ def xmasElves(graph):
             except:
                 print("couldn't remove %s from neighbours of %s" % (n, node.identifier))
                 continue
-        print([n for n in d.values()])
         minPossibilities = float('inf')
         for n in d.values():
             minPossibilities = min(len(n.neighbours), minPossibilities)
@@ -599,6 +602,6 @@ if __name__ == "__main__":
                 x.addEdge(elf, presentee, directed=True)
     xmasElves(x)
     sendXmasElvesMail(x)
-    for n in x.nodes.values():
+    """for n in x.nodes.values():
         print("%s mit E-Mail %s ist Wichtel von %s." % (n.identifier, n.email, n.presentee))
-    
+    """
