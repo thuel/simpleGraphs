@@ -87,9 +87,10 @@ class Table(object):
                 pRow = "|"
                 columnValues = self.getValuesFromRow(row)
                 for cell in range(len(columnValues)):
-                    pRow += " " + columnValues[cell]
-                                + " "*(columnWidths[cell]
-                                - len(columnValues[cell])) +" |"
+                    pRow += (" " + columnValues[cell]
+                             + " "*(columnWidths[cell]
+                                    - len(columnValues[cell]))
+                             +" |")
                 print(pRow)
                 print("-"*tableWidth)
 
@@ -368,8 +369,8 @@ class Simplegraph(object):
         # Assure the edge to be removed has the direction indicated in
         # the function call.
         if self.edges[edgeId].is_directed != directed:
-            print("Couldn't remove Edge object. The direction indicated
-                  doesn't match the edge's direction")
+            print("""Couldn't remove Edge object. The direction indicated
+                  doesn't match the edge's direction""")
             #TODO:raise ValueError("direction error"); instead of return
             return
 
@@ -439,8 +440,8 @@ def excel_to_table(excel_tbl, has_headers=True):
     try:
         wb = openwb(excel_tbl + ext)
     except:
-        raise ValueError("file needs to be xlsx or path specified
-                         including extension.")
+        raise ValueError("""file needs to be xlsx or path specified
+                         including extension.""")
     sheet = wb.sheets()[0]
     data_list = []
     for col in range(sheet.row_len(0)):
@@ -644,14 +645,14 @@ def xmaselves(graph):
             if len(n.neighbours) == min_presentees and not n.visited:
                 queue.append(n.identifier)
                 break
-        queue.extend([d[n].identifier for (n in d.keys()
-                                           if not d[n].visited
-                                           and d[n].identifier not in queue]))
+        queue.extend([d[n].identifier for n in d.keys()
+                      if not d[n].visited
+                      and d[n].identifier not in queue])
         queue = queue[1:]
     for n in d.values():
         if n.presentee not in elves:
-            raise ValueError("Run led to node with no neighbours.
-                             Please reexecute.")
+            raise ValueError("""Run led to node with no neighbours.
+                             Please reexecute.""")
 
 
 if __name__ == "__main__":
@@ -712,23 +713,28 @@ if __name__ == "__main__":
                                          'inputtables', 'testtbl'))
     newTab.printTable()
 
-    print('xmas elves starting here')
-    xmasTab = excel_to_table(os.path.join(os.path.curdir,
-                                          'inputtables', 'wichtel'))
-    x = Simplegraph()
-    for i in range(xmasTab.numRows):
-        A = Node(xmasTab.getValuesFromColumn(0)[i])
-        A.email = xmasTab.getValuesFromColumn(1)[i]
-        A.partner = xmasTab.getValuesFromColumn(2)[i]
-        x.add_node(A)
-    elves = x.nodes.values()
-    for elf in elves:
-        for presentee in elves:
-            if elf != presentee and presentee.identifier != elf.partner:
-                x.add_edge(elf, presentee, directed=True)
+    def setup_xmas_elves_graph():
+        print('xmas elves starting here')
+        xmasTab = excel_to_table(os.path.join(os.path.curdir,
+                                              'inputtables', 'wichtel'))
+        x = Simplegraph()
+        for i in range(xmasTab.numRows):
+            A = Node(xmasTab.getValuesFromColumn(0)[i])
+            A.email = xmasTab.getValuesFromColumn(1)[i]
+            A.partner = xmasTab.getValuesFromColumn(2)[i]
+            x.add_node(A)
+        elves = x.nodes.values()
+        for elf in elves:
+            for presentee in elves:
+                if (elf != presentee
+                    and presentee.identifier != elf.partner):
+                    x.add_edge(elf, presentee, directed=True)
+        return x
+
+    x = setup_xmas_elves_graph()
     xmaselves(x)
-    xmas_elves_mail(x)
-    """for n in x.nodes.values():
+    #xmas_elves_mail(x)
+    for n in x.nodes.values():
         print("%s mit E-Mail %s ist Wichtel von %s."
         % (n.identifier, n.email, n.presentee))
-    """
+    
