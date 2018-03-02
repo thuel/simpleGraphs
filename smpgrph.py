@@ -220,11 +220,14 @@ class Edge(object):
         self.identifier = identifier
         self.start = start
         self.end = end
+        # Reset default arguments in case multiple objects are initaliezed
+        # and assign them to the class variables
         if is_directed is None:
-            """Reset argument in case multiple objects are initaliezed
-            """
             isDireced = False
         self.is_directed = is_directed
+        if weight is None:
+            weight = 1
+        self.weight = weight
 
     def __str__(self):
         return "Edge with identifier \"%s\"" % self.identifier
